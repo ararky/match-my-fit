@@ -14,25 +14,22 @@
     --mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
     --sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   }
-  html, body { height: 100%; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--sans); overflow-x: hidden;
+  html { overflow-x: hidden; }
+  body { min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); overflow-x: hidden;
     -webkit-font-smoothing: antialiased; line-height: 1.5; }
-  body::before, body::after { content:''; position:fixed; z-index:-1; border-radius:50%; filter:blur(80px); opacity:.26; pointer-events:none; }
-  body::before { width:40vw; height:40vw; top:-10vw; right:-8vw; background:radial-gradient(circle,var(--a2),transparent 70%); }
-  body::after  { width:36vw; height:36vw; bottom:-12vw; left:-8vw; background:radial-gradient(circle,var(--a1),transparent 70%); }
 
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 1.6rem 1.4rem 5rem; }
+  /* ambient blobs clipped to viewport so they never add scroll height */
+  .ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .ambient::before, .ambient::after { content:''; position: absolute; border-radius: 50%; filter: blur(80px); opacity: .24; }
+  .ambient::before { width: 40vw; height: 40vw; top: -10vw; right: -8vw; background: radial-gradient(circle, var(--a2), transparent 70%); }
+  .ambient::after  { width: 36vw; height: 36vw; bottom: -12vw; left: -8vw; background: radial-gradient(circle, var(--a1), transparent 70%); }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 1rem 1.2rem 4rem; }
   .stack { max-width: 720px; margin: 0 auto; }
 
-  header.hero { padding: 2.2rem 0 1.5rem; text-align: center; }
-  .kicker { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sub);
-    display: inline-flex; align-items: center; gap: 0.5rem; }
-  .kicker .dot { width:7px; height:7px; border-radius:50%; background: var(--grad); }
-  h1 { font-size: clamp(3rem, 9vw, 5.4rem); font-weight: 850; letter-spacing: -0.04em; line-height: 0.92; margin: 0.7rem 0 0; }
-  h1 .g { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
-  .lede { font-size: 0.94rem; color: var(--sub); margin: 1rem auto 0; max-width: 34rem; line-height: 1.65; }
-  .lede b { color: var(--ink); font-weight: 650; }
-  .disclaimer { display: block; font-size: 0.74rem; color: var(--sub); margin-top: 0.7rem; line-height: 1.6; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.15rem 1.4rem; }
+  .brand { background: none; border: none; cursor: pointer; font-family: var(--sans); font-size: clamp(1.35rem, 3.6vw, 1.85rem); font-weight: 850; letter-spacing: -0.03em; color: var(--ink); padding: 0; line-height: 1; }
+  .brand .g { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
 
   .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 22px; padding: 1.3rem 1.3rem; margin-top: 1.1rem; box-shadow: var(--shadow); }
   .step { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sub); display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.85rem; }
@@ -55,12 +52,18 @@
   .btn.grad { background: var(--grad); color: #fff; width: 100%; margin-top: 1rem; box-shadow: 0 8px 22px -8px rgba(109,94,246,0.7); }
   .btn.grad:disabled { opacity: 0.35; box-shadow: none; cursor: default; }
   .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); display: block; margin: 1.6rem auto 0; }
-  .btn.sm { padding: 0.8rem 1.1rem; }
+  .btn.sm { padding: 0.72rem 1.05rem; font-size: 0.88rem; }
+  .back { background: none; border: none; font-family: var(--sans); font-size: 0.84rem; color: var(--sub); cursor: pointer; padding: 0.3rem 0; margin-bottom: 0.3rem; }
+  .back:hover { color: var(--ink); }
 
   .styles { display: flex; flex-wrap: wrap; gap: 0.45rem; }
   .style { font-family: var(--sans); font-size: 0.84rem; font-weight: 600; padding: 0.55rem 0.9rem; border-radius: 11px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; transition: 0.14s; }
   .style .em { display: block; font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; color: var(--sub); text-transform: uppercase; margin-top: 0.1rem; }
   .style.on { border-color: transparent; background: var(--ink); color: #fff; } .style.on .em { color: rgba(255,255,255,0.6); }
+
+  .seg { display: inline-flex; background: #f0eff5; border: 1px solid var(--line-soft); border-radius: 12px; padding: 3px; gap: 3px; }
+  .seg-btn { font-family: var(--sans); font-size: 0.84rem; font-weight: 650; padding: 0.45rem 1.1rem; border-radius: 9px; border: none; background: none; color: var(--sub); cursor: pointer; transition: 0.14s; }
+  .seg-btn.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(14,14,18,0.1); }
 
   .drop { border: 1.5px dashed var(--line); border-radius: 16px; padding: 1.8rem 1rem; text-align: center; cursor: pointer; transition: 0.15s; background: #fff; }
   .drop.over, .drop:active { border-color: var(--a1); background: #faf9ff; }
@@ -79,27 +82,34 @@
   .toggle input:checked + .track { background: var(--a1); }
   .toggle input:checked + .track::after { transform: translateX(16px); }
 
+  /* landing */
+  #landing { display: none; }
+  .demo-note { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); margin: 0 0.15rem 0.7rem; }
+
   #loading { display: none; text-align: center; padding: 3.5rem 0; } #loading.on { display: block; }
   .loader { width: 44px; height: 44px; margin: 0 auto 1.1rem; border-radius: 50%; background: conic-gradient(var(--a1), var(--a2), transparent 75%);
     -webkit-mask: radial-gradient(farthest-side, transparent 60%, #000 62%); mask: radial-gradient(farthest-side, transparent 60%, #000 62%); animation: sp 0.9s linear infinite; }
   @keyframes sp { to { transform: rotate(360deg); } }
   #loadmsg { font-size: 0.88rem; color: var(--sub); }
 
+  #setup { display: none; }
   #results { display: none; } #results.on { display: block; }
   .items-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .chip { font-size: 0.76rem; padding: 0.35rem 0.7rem; border-radius: 10px; background: #fff; border: 1px solid var(--line-soft); } .chip b { color: var(--a1); }
 
-  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.1rem; align-items: start; margin-top: 0.4rem; }
-  .look { background: var(--surface); border: 1px solid var(--line-soft); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); }
-  .look-head { padding: 1.1rem 1.2rem 0.6rem; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.6rem 1.4rem; align-items: start; margin-top: 0.2rem; }
+  .look { background: transparent; border: none; border-radius: 0; overflow: visible; box-shadow: none; }
+  .look-head { padding: 0.2rem 0.15rem 0.7rem; }
   .look-scene { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: transparent; background: var(--grad); -webkit-background-clip: text; background-clip: text; font-weight: 700; }
   .look-title { font-size: 1.5rem; font-weight: 780; letter-spacing: -0.02em; margin-top: 0.2rem; line-height: 1.1; }
-  .illus { margin: 0.4rem 0.8rem 0; border-radius: 16px; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #fbfaff 0%, #f1eff7 100%); aspect-ratio: 4/5; display: flex; align-items: center; justify-content: center; position: relative; }
+  .illus { margin: 0; border-radius: 14px; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #fbfaff 0%, #f1eff7 100%); aspect-ratio: 4/5; display: flex; align-items: center; justify-content: center; position: relative; }
   .illus img { width: 100%; height: 100%; display: block; object-fit: cover; cursor: zoom-in; }
+  .illus svg { width: 100%; height: 100%; display: block; }
   .illus .mini-loader { width: 30px; height: 30px; border-radius: 50%; background: conic-gradient(var(--a1), var(--a2), transparent 75%);
     -webkit-mask: radial-gradient(farthest-side, transparent 58%, #000 60%); mask: radial-gradient(farthest-side, transparent 58%, #000 60%); animation: sp 0.9s linear infinite; }
   .illus .fail { font-size: 0.78rem; color: var(--sub); padding: 1.2rem; text-align: center; line-height: 1.6; }
-  .look-body { padding: 0.95rem 1.2rem 1.3rem; }
+  .sample-tag { position: absolute; top: 8px; left: 8px; font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.14em; background: rgba(14,14,18,0.55); color: #fff; padding: 0.16rem 0.45rem; border-radius: 6px; }
+  .look-body { padding: 0.85rem 0.15rem 0; }
   .look-comment { font-size: 0.92rem; line-height: 1.7; }
   .ref-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sub); margin: 0.9rem 0 0.4rem; }
   .refs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -110,61 +120,81 @@
   .tag.add { background: rgba(109,94,246,0.1); color: var(--a1); font-weight: 600; }
 
   .err { font-size: 0.82rem; color: #B4231C; background: #FDECEA; border: 1px solid #F6C9C5; border-radius: 12px; padding: 0.75rem 0.9rem; margin-top: 0.9rem; line-height: 1.6; display: none; } .err.on { display: block; }
-  footer { text-align: center; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--sub); margin-top: 2.6rem; line-height: 1.9; text-transform: uppercase; }
+  footer { text-align: center; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--sub); margin-top: 2.4rem; line-height: 1.9; text-transform: uppercase; }
 
   #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(12,12,16,0.93); display: none; align-items: center; justify-content: center; padding: 2.5vw; cursor: zoom-out; }
   #lightbox.on { display: flex; }
   #lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 24px 70px rgba(0,0,0,0.55); }
   #lightbox .close { position: absolute; top: 1.2rem; right: 1.4rem; color: #fff; font-size: 1.6rem; opacity: 0.7; }
+
+  @media (max-width: 480px){
+    .topbar { padding-bottom: 1.1rem; }
+    .topbar .btn { padding: 0.6rem 0.85rem; font-size: 0.82rem; }
+  }
 </style>
 </head>
 <body>
+<div class="ambient"></div>
 <div class="wrap">
 
-  <div class="stack">
-    <header class="hero">
-      <span class="kicker"><span class="dot"></span> この服、似合う？ · AI STYLING</span>
-      <h1>Match <span class="g">My</span> Fit</h1>
-      <p class="lede">手持ちの服から“あなたに似合う”コーデを組んで、<b>エディトリアルなイラスト</b>で見せます。迷う一枚も、着た姿で確かめられる。
-        <span class="disclaimer">※スタイリングはClaude、イラストはGeminiが生成。手持ち写真を参照して描くので色柄も寄りますが、生成物は毎回少し変わり、手描き水彩の完全一致は保証しません。</span></p>
-    </header>
+  <header class="topbar">
+    <button class="brand" onclick="showLanding()">Match <span class="g">My</span> Fit</button>
+    <button class="btn solid sm" id="topcta" onclick="showSetup()">自分の服で試す →</button>
+  </header>
 
-    <div class="card" id="sec-key">
-      <div class="step"><span class="n">1</span> APIキー（初回のみ・2つ）</div>
-      <div class="keyfield">
-        <div class="keylabel">① Claude — スタイリング <span class="kstat" id="kstat-a"></span></div>
-        <div id="key-set-a" class="key-row">
-          <input type="password" id="apikey" placeholder="sk-ant-… を貼り付け" autocomplete="off">
-          <button class="btn solid sm" onclick="saveKey('a')">保存</button>
-        </div>
-      </div>
-      <div class="keyfield">
-        <div class="keylabel">② Gemini — イラスト生成 <span class="kstat" id="kstat-g"></span></div>
-        <div id="key-set-g" class="key-row">
-          <input type="password" id="gkey" placeholder="AIza… を貼り付け" autocomplete="off">
-          <button class="btn solid sm" onclick="saveKey('g')">保存</button>
-        </div>
-      </div>
-      <p class="hint">両方とも <b>ブラウザ内だけ</b>に保存され、各社へ直接送信されます（サーバー非経由）。Claudeは <span class="link" onclick="window.open('https://console.anthropic.com/settings/keys','_blank')">console.anthropic.com</span>、Geminiは <span class="link" onclick="window.open('https://aistudio.google.com/apikey','_blank')">aistudio.google.com/apikey</span> で発行（画像生成は従量課金の有効化が必要）。</p>
-    </div>
+  <!-- LANDING : random sample looks -->
+  <div id="landing">
+    <div class="demo-note">お試し例（ランダム表示）</div>
+    <div id="demo" class="gallery"></div>
+  </div>
 
-    <div class="card" id="sec-up">
-      <div class="step"><span class="n">2</span> テイストを選ぶ</div>
-      <div class="styles" id="styles"></div>
-      <div class="step" style="margin-top:1.3rem"><span class="n">3</span> 手持ちの服をアップ</div>
-      <div class="drop" id="drop" onclick="document.getElementById('file').click()">
-        <div class="ic">📷</div>
-        <div class="big">タップして写真を選ぶ</div>
-        <div class="sub">トップス・パンツ・靴・小物など。複数枚OK（最大8枚）</div>
+  <!-- SETUP : keys + upload -->
+  <div id="setup">
+    <div class="stack">
+      <button class="back" onclick="showLanding()">← 見本に戻る</button>
+
+      <div class="card" id="sec-key">
+        <div class="step"><span class="n">1</span> APIキー（初回のみ・2つ）</div>
+        <div class="keyfield">
+          <div class="keylabel">① Claude — スタイリング <span class="kstat" id="kstat-a"></span></div>
+          <div id="key-set-a" class="key-row">
+            <input type="password" id="apikey" placeholder="sk-ant-… を貼り付け" autocomplete="off">
+            <button class="btn solid sm" onclick="saveKey('a')">保存</button>
+          </div>
+        </div>
+        <div class="keyfield">
+          <div class="keylabel">② Gemini — イラスト生成 <span class="kstat" id="kstat-g"></span></div>
+          <div id="key-set-g" class="key-row">
+            <input type="password" id="gkey" placeholder="AIza… を貼り付け" autocomplete="off">
+            <button class="btn solid sm" onclick="saveKey('g')">保存</button>
+          </div>
+        </div>
+        <p class="hint">両方とも <b>ブラウザ内だけ</b>に保存され、各社へ直接送信されます（サーバー非経由）。Claudeは <span class="link" onclick="window.open('https://console.anthropic.com/settings/keys','_blank')">console.anthropic.com</span>、Geminiは <span class="link" onclick="window.open('https://aistudio.google.com/apikey','_blank')">aistudio.google.com/apikey</span> で発行（画像生成は従量課金の有効化が必要）。</p>
       </div>
-      <input type="file" id="file" accept="image/*" multiple style="display:none">
-      <div class="thumbs" id="thumbs"></div>
-      <input type="text" id="note" placeholder="好みメモ（任意）例：ネイビー多め／ローファー持ってる" style="margin-top:0.9rem">
-      <div class="row-between">
-        <label class="toggle"><input type="checkbox" id="eco"><span class="track"></span><span>省コストモード（Haiku・少し軽量）</span></label>
+
+      <div class="card" id="sec-up">
+        <div class="step"><span class="n">2</span> 性別とテイスト</div>
+        <div class="seg" id="gender">
+          <button class="seg-btn on" data-g="mens" onclick="pickGender('mens')">メンズ</button>
+          <button class="seg-btn" data-g="womens" onclick="pickGender('womens')">ウィメンズ</button>
+        </div>
+        <div class="styles" id="styles" style="margin-top:0.7rem"></div>
+        <div class="step" style="margin-top:1.3rem"><span class="n">3</span> 手持ちの服をアップ</div>
+        <div class="drop" id="drop" onclick="document.getElementById('file').click()">
+          <div class="ic">📷</div>
+          <div class="big">タップして写真を選ぶ</div>
+          <div class="sub">トップス・パンツ・靴・小物など。複数枚OK（最大8枚）</div>
+        </div>
+        <input type="file" id="file" accept="image/*" multiple style="display:none">
+        <div class="thumbs" id="thumbs"></div>
+        <input type="text" id="note" placeholder="好みメモ（任意）例：ネイビー多め／ローファー持ってる" style="margin-top:0.9rem">
+        <div class="row-between">
+          <label class="toggle"><input type="checkbox" id="eco"><span class="track"></span><span>省コストモード（Haiku・少し軽量）</span></label>
+        </div>
+        <p class="hint">スタイリングはClaude、イラストはGeminiが生成。手持ち写真を参照して描くので色柄も寄りますが、生成物は毎回少し変わります。</p>
+        <button class="btn grad" id="go" onclick="analyze()" disabled>似合うか、組んで描いてもらう</button>
+        <div class="err" id="err"></div>
       </div>
-      <button class="btn grad" id="go" onclick="analyze()" disabled>似合うか、組んで描いてもらう</button>
-      <div class="err" id="err"></div>
     </div>
   </div>
 
@@ -195,6 +225,8 @@ const KEY_LS = 'coordmatch_apikey';
 const GKEY_LS = 'coordmatch_gkey';
 let files = [];
 let styleKey = 'ivy';
+let gender = 'mens';
+function genderJP(){ return gender==='mens' ? 'メンズ' : 'ウィメンズ'; }
 
 const STYLES = {
   ivy:     { label: 'アイビー',   em: 'IVY / PREPPY',
@@ -221,7 +253,117 @@ function renderStyles(){
     `<button class="style ${k===styleKey?'on':''}" onclick="pickStyle('${k}')">${s.label}<span class="em">${s.em}</span></button>`).join('');
 }
 function pickStyle(k){ styleKey = k; renderStyles(); }
+function pickGender(g){ gender = g;
+  document.querySelectorAll('#gender .seg-btn').forEach(b => b.classList.toggle('on', b.dataset.g===g));
+  renderDemo(); }
 
+/* ---------- view switching ---------- */
+function showView(v){
+  document.getElementById('landing').style.display = (v==='landing') ? 'block' : 'none';
+  document.getElementById('setup').style.display   = (v==='setup')   ? 'block' : 'none';
+  document.getElementById('loading').classList.toggle('on', v==='loading');
+  document.getElementById('results').classList.toggle('on', v==='results');
+  document.getElementById('topcta').style.display = (v==='landing') ? '' : 'none';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+function showLanding(){ showView('landing'); }
+function showSetup(){ showView('setup'); }
+
+/* ---------- sample looks (landing) ---------- */
+const SAMPLES = [
+  // ---- MENS ----
+  { g:'mens', scene:'CAMPUS DAY',  title:'王道アイビーの基本形', comment:'ニットの下からシャツの襟をのぞかせ、袖をまくって抜けを。', tags:['BDシャツ','シェットランド','チノ','＋ローファー'], pal:['#2f3c5c','#d8cbb2','#7a2f28'] },
+  { g:'mens', scene:'CLEAN OFFICE',title:'端正なきれいめ',      comment:'色数を絞って素材で見せる。艶の革靴で全体を締めて。',   tags:['白シャツ','グレースラックス','＋ネイビージャケット'], pal:['#3a3f4a','#e7e4dd','#9aa7b3'] },
+  { g:'mens', scene:'WEEKEND OUT', title:'古着MIXの休日',       comment:'差し色は一点だけ。トーンを合わせて大人の抜け感に。',   tags:['ビンテージニット','デニム','＋ローテクスニーカー'], pal:['#8a5a2b','#caa46a','#3e4a36'] },
+  { g:'mens', scene:'NIGHT MODE',  title:'モードな一着主義',     comment:'黒で構築し、ロング丈で縦を強調。小物まで黒で通す。',   tags:['ブラックコート','スラックス','＋レザーシューズ'], pal:['#17181c','#3a3b40','#c9c9cf'] },
+  { g:'mens', scene:'CITY STREET', title:'こなれストリート',     comment:'オーバーサイズは足元をすっきり。ワントーンで today 感。', tags:['スウェット','カーゴ','＋ハイテクスニーカー'], pal:['#26262b','#7c7c84','#aef04e'] },
+  { g:'mens', scene:'RAINY DAY',   title:'トレンチの余裕',       comment:'ベージュのトレンチで即・大人。中はシンプルに徹する。', tags:['トレンチ','ニット','＋革靴'], pal:['#b8a888','#2f3c5c','#5a4632'] },
+  { g:'mens', scene:'SUNDAY OFF',  title:'ニット×デニムの休息',  comment:'足し算しすぎない。白スニーカーで軽さを添えて。',       tags:['ケーブルニット','デニム','＋白スニーカー'], pal:['#3e5a44','#31406b','#efe9db'] },
+  { g:'mens', scene:'GALLERY',     title:'モノトーンの知性',     comment:'グレーの濃淡で奥行きを。素材差で単調を避ける。',       tags:['グレーニット','ブラックパンツ'], pal:['#6a6a72','#1b1b1f','#e6e6ea'] },
+  { g:'mens', scene:'SEASIDE AM',  title:'リネンの軽やかさ',     comment:'白×水色で清潔感。素足に革サンダルで抜けを。',         tags:['リネンシャツ','ベージュパンツ','＋レザーサンダル'], pal:['#eef1f4','#9ec2d8','#d9caa8'] },
+  // ---- WOMENS ----
+  { g:'womens', scene:'ATELIER',      title:'端正なワントーン',   comment:'同系色で重ねて洗練を。足元はポインテッドで締める。',   tags:['とろみブラウス','テーパードパンツ','＋パンプス'], pal:['#b7afa2','#efece5','#8f8375'] },
+  { g:'womens', scene:'FLOWER MARKET',title:'フレンチな抜け',     comment:'ボーダーにデニム。差し色を一点だけ効かせて上品に。',   tags:['ボーダー','デニム','＋バレエシューズ'], pal:['#26324f','#eceae3','#b23b34'] },
+  { g:'womens', scene:'BOOKSTORE',    title:'きれいめニットの日', comment:'キャメルで上品に。細見えのIラインを意識して。',       tags:['キャメルニット','ロングスカート','＋ローファー'], pal:['#b98a52','#efe7d8','#6b4a2c'] },
+  { g:'womens', scene:'GALLERY NIGHT',title:'モードの陰影',       comment:'黒のレイヤードで陰影を。シルバー小物で引き締める。',   tags:['ブラックワンピ','ロングコート','＋レザーブーツ'], pal:['#17181c','#3a3b40','#c9c9cf'] },
+  { g:'womens', scene:'PARK STROLL',  title:'古着ワンピの休日',   comment:'アースカラーで季節感。カゴやスニーカーで肩の力を抜く。', tags:['プリントワンピ','カーディガン','＋スニーカー'], pal:['#a55a34','#caa46a','#5c6b3e'] },
+  { g:'womens', scene:'STUDIO DAY',   title:'リラクシングセット', comment:'くすみ色のセットアップで今っぽく。白で軽さを。',       tags:['スウェット上下','＋白スニーカー'], pal:['#8f8aa0','#c9c2d8','#efeef2'] },
+  { g:'womens', scene:'CITY POP',     title:'差し色ストリート',   comment:'黒ベースにピンクを効かせて。甘辛のバランスで。',       tags:['ロゴT','カーゴスカート','＋ハイテクスニーカー'], pal:['#232327','#c96f96','#7c7c84'] },
+  { g:'womens', scene:'GOLDEN HOUR',  title:'やわらかレイヤード', comment:'テラコッタ×生成りで温かく。透け素材で軽やかに。',     tags:['シアーブラウス','ロングスカート','＋サンダル'], pal:['#b5623b','#efe6d5','#7a5236'] },
+  { g:'womens', scene:'RIVERSIDE',    title:'デニム×白の定番',    comment:'インディゴに白で清潔感。まくり袖でこなれを出す。',     tags:['白シャツ','ストレートデニム','＋ローファー'], pal:['#31406b','#eef0f2','#cbb996'] }
+];
+/* flat-lay outfit illustration drawn from the palette (top / bottom / shoes) */
+function outfitTop(kind, c, c2, ink){
+  if(kind==='dress'){
+    return `<path d="M124 78 L150 66 Q160 74 176 78 L172 150 Q210 250 224 300 L76 300 Q90 250 128 150 Z" fill="${c}"/>
+      <path d="M124 78 L100 108 L86 148 L104 156 L128 118" fill="${c}"/>
+      <path d="M176 78 L200 108 L214 148 L196 156 L172 118" fill="${c}"/>
+      <path d="M138 78 Q150 92 162 78" fill="${c2}" stroke-width="1.8"/>`;
+  }
+  if(kind==='coat'){
+    return `<path d="M118 80 L96 110 L82 156 L102 166 L118 130 Z" fill="${c}"/>
+      <path d="M182 80 L204 110 L218 156 L198 166 L182 130 Z" fill="${c}"/>
+      <path d="M118 80 Q150 66 182 80 L180 250 L120 250 Z" fill="${c}"/>
+      <path d="M150 80 L150 250" stroke-width="1.8"/>
+      <path d="M132 82 L150 108 L168 82" fill="${c2}" stroke-width="1.8"/>
+      <circle cx="150" cy="150" r="2.4" fill="${ink}" stroke="none"/><circle cx="150" cy="176" r="2.4" fill="${ink}" stroke="none"/>`;
+  }
+  /* sweater (default) */
+  return `<path d="M114 84 L66 112 L82 158 L114 148 Z" fill="${c}"/>
+    <path d="M186 84 L234 112 L218 158 L186 148 Z" fill="${c}"/>
+    <path d="M114 84 Q150 70 186 84 L182 186 L118 186 Z" fill="${c}"/>
+    <path d="M132 84 Q150 104 168 84" fill="${c2}" stroke-width="1.8"/>`;
+}
+function outfitBottom(kind, c, ink){
+  if(kind==='dress') return '';
+  if(kind==='skirt'){
+    return `<path d="M120 200 L180 200 L200 300 L100 300 Z" fill="${c}"/><rect x="118" y="192" width="64" height="12" rx="4" fill="${c}"/>`;
+  }
+  /* trousers */
+  return `<rect x="120" y="194" width="60" height="12" rx="4" fill="${c}"/>
+    <path d="M122 206 L148 206 L145 322 L124 322 L116 220 Z" fill="${c}"/>
+    <path d="M152 206 L178 206 L184 220 L176 322 L155 322 Z" fill="${c}"/>`;
+}
+function outfitShoes(y, ink){
+  return `<path d="M112 ${y} q-6 20 14 20 h22 q6 0 6 -8 v-8 q0 -4 -6 -4 h-22 q-9 0 -14 8Z" fill="${ink}"/>
+    <path d="M188 ${y} q6 20 -14 20 h-22 q-6 0 -6 -8 v-8 q0 -4 6 -4 h22 q9 0 14 8Z" fill="${ink}"/>`;
+}
+function demoArt(pal, i, meta){
+  const [c1, c2, c3] = pal, ink = '#33333a';
+  const top = (meta && meta.top) || 'sweater';
+  const bottom = (meta && meta.bottom) || 'trousers';
+  const dress = top === 'dress';
+  const shoesY = dress ? 326 : 330;
+  return `<svg viewBox="0 0 300 375" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="375" fill="#f6f3ee"/>
+    <g stroke="${ink}" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round">
+      ${dress ? '' : outfitBottom(bottom, c3, ink)}
+      ${outfitTop(top, c1, c2, ink)}
+      ${outfitShoes(shoesY, ink)}
+    </g>
+  </svg>`;
+}
+function outfitKind(s){
+  const t = s.tags.join('');
+  if(/ワンピ|ドレス/.test(t)) return { top:'dress' };
+  return { top: /コート|トレンチ/.test(t) ? 'coat' : 'sweater',
+           bottom: /スカート/.test(t) ? 'skirt' : 'trousers' };
+}
+function demoCard(s, i){
+  const tags = s.tags.map(t => t.indexOf('＋')===0 ? `<span class="tag add">${esc(t)}</span>` : `<span class="tag">${esc(t)}</span>`).join('');
+  return `<div class="look">
+    <div class="look-head"><div class="look-scene">${esc(s.scene)}</div><div class="look-title">${esc(s.title)}</div></div>
+    <div class="illus">${demoArt(s.pal, i, outfitKind(s))}<span class="sample-tag">SAMPLE</span></div>
+    <div class="look-body"><p class="look-comment">${esc(s.comment)}</p><div class="look-tags">${tags}</div></div>
+  </div>`;
+}
+function renderDemo(){
+  const pool = SAMPLES.filter(s => s.g === gender);
+  for(let j=pool.length-1; j>0; j--){ const k=Math.floor(Math.random()*(j+1)); const t=pool[j]; pool[j]=pool[k]; pool[k]=t; }
+  document.getElementById('demo').innerHTML = pool.slice(0,3).map((s,i) => demoCard(s,i)).join('');
+}
+
+/* ---------- keys ---------- */
 const KEYMAP = { a: { ls: KEY_LS, set: 'key-set-a', stat: 'kstat-a', inp: 'apikey' },
                  g: { ls: GKEY_LS, set: 'key-set-g', stat: 'kstat-g', inp: 'gkey' } };
 function refreshKeyUI(){
@@ -235,6 +377,7 @@ function saveKey(which){ const m = KEYMAP[which]; const v = document.getElementB
   localStorage.setItem(m.ls, v); document.getElementById(m.inp).value=''; refreshKeyUI(); }
 function clearKey(which){ localStorage.removeItem(KEYMAP[which].ls); refreshKeyUI(); }
 
+/* ---------- upload ---------- */
 const drop = document.getElementById('drop');
 document.getElementById('file').addEventListener('change', e => handleFiles(e.target.files));
 ['dragover','dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
@@ -256,6 +399,7 @@ function resizeToB64(file,max){ return new Promise((res,rej)=>{ const img=new Im
     const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
     res(c.toDataURL('image/jpeg',0.85).split(',')[1]); }; img.onerror=rej; img.src=URL.createObjectURL(file); }); }
 
+/* ---------- styling call (Claude) ---------- */
 const SCHEMA = { type:'object', properties:{
   items:{type:'array',items:{type:'object',properties:{name:{type:'string'},category:{type:'string'},color:{type:'string'}},required:['name','category','color'],additionalProperties:false}},
   coordinates:{type:'array',items:{type:'object',properties:{
@@ -265,7 +409,7 @@ const SCHEMA = { type:'object', properties:{
 
 function buildSystem(){ const s=STYLES[styleKey];
   return `あなたは"${s.persona}"を専門とする一流スタイリストです。
-ユーザーの手持ち服の写真（順に1番からN番まで番号付き）を見て、それらを主役にした「${s.label}」のコーディネートを日本語で提案します。
+ユーザーの手持ち服の写真（順に1番からN番まで番号付き）を見て、それらを主役にした「${s.label}」の${genderJP()}（${gender==='mens'?'男性':'女性'}）コーディネートを日本語で提案します。
 - 提案は2〜3パターン。sceneは英語の短いラベル。
 - use に各コーデで使う手持ちアイテム名、use_indexes に対応する写真番号（1始まりの整数）を必ず入れる。
 - 足りない定番は add に具体名で。手持ちで十分なら add は空配列。
@@ -281,15 +425,12 @@ async function analyze(){
   if(!gkey){ showErr('先に②Geminiキーを保存してください（イラスト生成に必要）。'); return; }
   if(files.length===0) return;
 
-  document.getElementById('sec-up').style.display='none';
-  document.getElementById('sec-key').style.display='none';
-  document.querySelector('.hero').style.display='none';
-  document.getElementById('loading').classList.add('on');
+  showView('loading');
   document.getElementById('loadmsg').textContent = STYLES[styleKey].label + 'で組んでいます…';
 
   const note = document.getElementById('note').value.trim();
   const model = document.getElementById('eco').checked ? 'claude-haiku-4-5' : 'claude-opus-4-8';
-  const userText = `これは私の手持ちアイテムの写真です（${files.length}枚、順に1〜${files.length}番）。これらを主役にした「${STYLES[styleKey].label}」のコーディネートを提案してください。`
+  const userText = `これは私の手持ちアイテムの写真です（${files.length}枚、順に1〜${files.length}番）。これらを主役にした「${STYLES[styleKey].label}」の${genderJP()}コーディネートを提案してください。`
     + (note ? `\n好みメモ：${note}` : '');
   const content = files.map(f=>({ type:'image', source:{ type:'base64', media_type:f.mediaType, data:f.b64 } }));
   content.push({ type:'text', text:userText });
@@ -304,13 +445,10 @@ async function analyze(){
     if(!tb){ throw new Error('応答を解析できませんでした。'); }
     const parsed = JSON.parse(tb.text);
     renderResults(parsed);
-    document.getElementById('loading').classList.remove('on');
+    showView('results');
     (parsed.coordinates||[]).forEach((c,i)=> drawLook(c, i));
   } catch(e){
-    document.getElementById('loading').classList.remove('on');
-    document.querySelector('.hero').style.display='block';
-    document.getElementById('sec-up').style.display='block';
-    document.getElementById('sec-key').style.display='block';
+    showView('setup');
     showErr(e.message||String(e));
   }
 }
@@ -334,15 +472,14 @@ function renderResults(d){
         <div class="look-tags">${tags}</div>
       </div></div>`;
   }).join('');
-  document.getElementById('results').classList.add('on');
-  window.scrollTo({ top:0, behavior:'smooth' });
 }
 
+/* ---------- illustration (Gemini) ---------- */
 const GEMINI_MODEL = 'gemini-2.5-flash-image';
 function illusPrompt(c, s){
   const pieces = [...(c.use||[]), ...(c.add||[])].join('、');
   return `A full-length editorial fashion illustration in the style of hand-drawn ink linework with loose, expressive watercolor washes — a magazine fashion croquis, elegant and refined.
-Depict a single figure, full body from head to toe, standing in a natural elegant pose, on a clean off-white paper background.
+Depict a single ${gender==='mens'?'male':'female'} figure, full body from head to toe, standing in a natural elegant pose, on a clean off-white paper background.
 The figure wears this ${s.label} outfit: ${pieces}.
 Use the provided clothing photographs as reference for the real colours, patterns, materials and details of each garment — keep them recognisable.
 Palette leaning: ${s.palette}. No text, no captions, no borders, no logos. Single figure only.`;
@@ -383,14 +520,9 @@ function openLb(src){ const lb=document.getElementById('lightbox'); document.get
 function closeLb(){ document.getElementById('lightbox').classList.remove('on'); }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
-function reset(){ files=[]; renderThumbs(); document.getElementById('note').value='';
-  document.getElementById('results').classList.remove('on');
-  document.querySelector('.hero').style.display='block';
-  document.getElementById('sec-up').style.display='block';
-  document.getElementById('sec-key').style.display='block';
-  window.scrollTo({ top:0, behavior:'smooth' }); }
+function reset(){ files=[]; renderThumbs(); document.getElementById('note').value=''; showView('setup'); }
 
-renderStyles(); refreshKeyUI();
+renderStyles(); refreshKeyUI(); renderDemo(); showView('landing');
 </script>
 </body>
 </html>
