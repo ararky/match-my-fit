@@ -278,13 +278,13 @@ function tagsHTML(c){
   [c.p, c.f, c.b, ...(c.x||[])].filter(Boolean).forEach(id => t.push(`<span class="tag" title="${id}">${esc(iname(id))}</span>`));
   return t.join('');
 }
-function lookCardHTML(c, note){
+function lookCardHTML(c, note, pfx){
   return `<div class="look">
     <div class="look-head">
       <div class="look-scene">${esc(c.s)}</div>
       <div class="look-title">${esc(c.t)}<span class="look-no">#${c.n}</span></div>
     </div>
-    <div class="illus" id="cillus-${c.n}"><div class="mini-loader"></div></div>
+    <div class="illus" id="cillus-${pfx}-${c.n}"><div class="mini-loader"></div></div>
     <div class="look-body">
       ${note ? `<p class="look-note">${esc(note)}</p>` : ''}
       <div class="look-tags">${tagsHTML(c)}</div>
@@ -293,37 +293,46 @@ function lookCardHTML(c, note){
 }
 
 /* illustration resolution: cache → bundled looks/{n}.jpg → generate button */
-function setIllusImg(box, src, withDl, n){
-  box.innerHTML = '';
+function setIllusImg(box, src, withDl, n, pfx){
+  // token: if a newer init/gen call targets this box, older async loads are discarded (prevents double-append)
+  const tok = box.__tok = (box.__tok || 0) + 1;
+  box.innerHTML = '<div class="mini-loader"></div>';
   const img = new Image();
   img.onload = () => {
+    if(box.__tok !== tok) return;
+    box.innerHTML = '';
     box.appendChild(img);
     if(withDl){
       const rg = document.createElement('button'); rg.className = 'rg'; rg.textContent = '↻ 再生成';
-      rg.onclick = () => { try { localStorage.removeItem(imgKey(n)); } catch(e){} genLookIllus(n); };
+      rg.onclick = () => { try { localStorage.removeItem(imgKey(n)); } catch(e){} genLookIllus(n, pfx); };
       box.appendChild(rg);
       const a = document.createElement('a'); a.className = 'dl'; a.textContent = '⬇ 保存'; a.href = src;
       a.download = (gender === 'womens' ? 'w' : '') + n + '.jpg';
       box.appendChild(a);
     }
   };
+  img.onerror = () => { if(box.__tok === tok){ box.innerHTML = '<div class="fail">画像を表示できませんでした</div>'; } };
   img.onclick = () => openLb(src);
   img.src = src;
 }
 function imgKey(n){ return gender === 'womens' ? 'mmf_cimg_w' + n : 'mmf_cimg_' + n; }
 function bundledPath(n){ return gender === 'womens' ? 'looks/w' + n + '.jpg' : 'looks/' + n + '.jpg'; }
-function initLookImg(n){
-  const box = document.getElementById('cillus-' + n);
+function initLookImg(n, pfx){
+  const box = document.getElementById('cillus-' + pfx + '-' + n);
   if(!box) return;
+  const tok = box.__tok = (box.__tok || 0) + 1;
   const cached = lsGet(imgKey(n));
-  if(cached){ setIllusImg(box, cached, true, n); return; }
+  if(cached){ setIllusImg(box, cached, true, n, pfx); return; }
   const probe = new Image();
-  probe.onload = () => setIllusImg(box, bundledPath(n), false, n);
+  probe.onload = () => { if(box.__tok === tok) setIllusImg(box, bundledPath(n), false, n, pfx); };
   probe.onerror = () => {
-    box.innerHTML = `<button class="genb" onclick="genLookIllus(${n})">イラストを生成</button><div class="gen-hint">Geminiキーで1回だけ生成（約$0.04）・端末に保存されます</div>`;
+    if(box.__tok !== tok) return;
+    box.innerHTML = `<button class="genb" onclick="genLookIllus(${n}, '${pfx}')">イラストを生成</button><div class="gen-hint">Geminiキーで1回だけ生成（約$0.04）・端末に保存されます</div>`;
   };
   probe.src = bundledPath(n);
 }
+/* after a successful generation, refresh this look's box in every view */
+function refreshLookBoxes(n){ ['s','a'].forEach(p => initLookImg(n, p)); }
 function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
 
@@ -345,8 +354,9 @@ COLOR: flat solid fills only, limited to 2–4 key colours taken from the outfit
 MOOD: ${c.s} — ${c.t}.
 No text, no logos, no UI, no captions, no borders.`;
 }
-async function genLookIllus(n){
-  const box = document.getElementById('cillus-' + n);
+async function genLookIllus(n, pfx){
+  pfx = pfx || 's';
+  const box = document.getElementById('cillus-' + pfx + '-' + n);
   const c = CMAP[n];
   if(!box || !c) return;
   const gkey = localStorage.getItem(GKEY_LS);
@@ -354,6 +364,7 @@ async function genLookIllus(n){
     box.innerHTML = `<div class="fail">イラスト生成には Gemini キーが必要です。<br><span class="link" onclick="showView('setup')">「自分の服で試す」画面</span>の②で保存してください。</div>`;
     return;
   }
+  box.__tok = (box.__tok || 0) + 1;
   box.innerHTML = '<div class="mini-loader"></div>';
   try {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=` + encodeURIComponent(gkey),
@@ -379,12 +390,15 @@ async function genLookIllus(n){
         src = cv.toDataURL('image/jpeg', 0.85);
         lsSet(imgKey(n), src);
       } catch(e){}
-      setIllusImg(box, src, true, n);
+      setIllusImg(box, src, true, n, pfx);
+      const other = pfx === 's' ? 'a' : 's';
+      const ob = document.getElementById('cillus-' + other + '-' + n);
+      if(ob) setIllusImg(ob, src, true, n, other);
     };
     img.onerror = () => { box.innerHTML = '<div class="fail">画像を表示できませんでした</div>'; };
     img.src = raw;
   } catch(e){
-    box.innerHTML = `<div class="fail">生成に失敗：${esc(String(e.message||e)).slice(0,140)}<br><button class="genb" style="margin-top:0.6rem" onclick="genLookIllus(${n})">もう一度</button></div>`;
+    box.innerHTML = `<div class="fail">生成に失敗：${esc(String(e.message||e)).slice(0,140)}<br><button class="genb" style="margin-top:0.6rem" onclick="genLookIllus(${n}, '${pfx}')">もう一度</button></div>`;
   }
 }
 
@@ -401,8 +415,8 @@ function pickSeason(k){ curSeason = k; renderLooks(); }
 function renderLooks(){
   renderSeasonBar();
   const picks = SEASONAL[curSeason].picks;
-  document.getElementById('season-cards').innerHTML = picks.map(p => lookCardHTML(CMAP[p.n], p.note)).join('');
-  picks.forEach(p => initLookImg(p.n));
+  document.getElementById('season-cards').innerHTML = picks.map(p => lookCardHTML(CMAP[p.n], p.note, 's')).join('');
+  picks.forEach(p => initLookImg(p.n, 's'));
   renderMine();
 }
 function renderMine(){
@@ -428,8 +442,8 @@ function renderAll(){
     return q.split(/\s+/).every(w => hay.includes(w));
   });
   document.getElementById('all-count').textContent = hit.length + ' / 100 コーデ';
-  document.getElementById('all-cards').innerHTML = hit.map(c => lookCardHTML(c, null)).join('');
-  hit.forEach(c => initLookImg(c.n));
+  document.getElementById('all-cards').innerHTML = hit.map(c => lookCardHTML(c, null, 'a')).join('');
+  hit.forEach(c => initLookImg(c.n, 'a'));
 }
 
 /* ---------- アイテム100 ---------- */
@@ -599,14 +613,15 @@ function renderUserResults(d){
 
 function userPrompt(c, s){
   const pieces = [...(c.use||[]), ...(c.add||[])].join('、');
-  return `A minimal flat-color comic-style editorial illustration — like a modern Japanese culture-magazine spot illustration or a striking SNS eyecatch. Quiet but memorable, slightly quirky, never cute or ad-like.
-Composition: vertical 3:4, EXACTLY ONE ${gender==='mens'?'male':'female'} figure, full body, centered, seen from a slight 45-degree front angle, standing calmly. Large generous white margins around the figure. Plain white background — no scenery.
-Never draw a second person, a partial figure, a back view, an alternate angle, or a side-by-side variation.
-Line style: ALL outlines in uniform EXTRA-THICK black lines, clean hand-drawn but not rough. No thin, delicate or faint lines anywhere.
-Figure style: simplified into basic shapes, slightly awkward endearing proportions. Minimal face — dot eyes, simple nose, small mouth.
-The figure wears this ${s.label} outfit, drawn slightly OVERSIZED — boxy, relaxed, drapey modern silhouette: ${pieces}.
+  return `A minimal flat-color comic-style spot illustration for a modern Japanese culture magazine. Quiet but memorable, slightly quirky, never cute or ad-like.
+SUBJECT: one single ${gender==='mens'?'male':'female'} character, drawn exactly once. A solo full-body character illustration — the lone figure stands in the centre of the frame with generous empty white margin on every side, and the whole body from head to shoes sits fully inside the frame, nothing touching or cropped by the edges.
+POSE: facing the viewer in a relaxed three-quarter stance, standing calmly.
+Do not draw a second person. Do not repeat or duplicate the figure. Do not make a collage, grid, or lookbook spread — one figure on one plain white page.
+LINE: all outlines in uniform EXTRA-THICK black lines, clean hand-drawn but not rough. No thin, delicate or faint lines anywhere.
+FIGURE: simplified into basic shapes, slightly awkward endearing proportions. Minimal face — dot eyes, simple nose, small mouth.
+OUTFIT — this ${s.label} outfit, drawn slightly OVERSIZED with a boxy, relaxed, drapey modern silhouette: ${pieces}.
 Use the provided clothing photographs as reference for the garments' key colours and patterns, but simplify them into flat solid fills — keep each garment recognisable by shape and colour.
-Colors: flat solid fills only, limited to 2–4 key colours (palette leaning: ${s.palette}). No shading, no gradients, no realistic textures, no photographic rendering.
+COLOR: flat solid fills only, limited to 2–4 key colours (palette leaning: ${s.palette}). Plain white background. No shading, no gradients, no realistic textures, no photographic rendering.
 No text, no logos, no UI, no captions, no borders.`;
 }
 async function drawUserLook(c, i){
