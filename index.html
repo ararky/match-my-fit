@@ -40,6 +40,14 @@
   .savb { flex-shrink: 0; font-family: var(--sans); font-size: 0.72rem; font-weight: 650; padding: 0.32rem 0.6rem; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--sub); cursor: pointer; margin-top: 0.15rem; }
   .savb.on { background: var(--blue); border-color: var(--blue); color: #fff; }
 
+  .feat-head { display: flex; align-items: center; gap: 0.7rem; margin: 0.2rem 0 0.5rem; }
+  .feat-vol { font-family: var(--mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; color: #fff; background: var(--blue); padding: 0.2rem 0.55rem; border-radius: 7px; }
+  .feat-kicker { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sub); }
+  .feat-title { font-size: clamp(1.6rem, 4.5vw, 2.4rem); font-weight: 850; letter-spacing: -0.03em; line-height: 1.1; }
+  .feat-lead { font-size: 0.92rem; color: var(--sub); line-height: 1.8; max-width: 42rem; margin: 0.6rem 0 0.9rem; }
+  .feat-now { margin-bottom: 1rem; }
+  .feat-back-title { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sub); margin: 2rem 0 0.6rem; }
+
   .mix-bar { display: flex; align-items: center; gap: 0.8rem; margin: 0.2rem 0 1.1rem; flex-wrap: wrap; }
   .mix-hint { font-size: 0.76rem; color: var(--sub); }
   .mix-shuffle { margin-left: auto; }
@@ -160,6 +168,7 @@
     <button class="brand" onclick="showView('looks')">Match <span class="g">My</span> Fit</button>
     <nav class="nav" id="nav">
       <button data-v="looks" class="on" onclick="showView('looks')">季節のコーデ</button>
+      <button data-v="feature" onclick="showView('feature')">特集</button>
       <button data-v="all" onclick="showView('all')">コーデ100</button>
       <button data-v="mix" onclick="showView('mix')">ミックス</button>
       <button data-v="items" onclick="showView('items')">アイテム100</button>
@@ -193,6 +202,20 @@
   <div id="items-view" style="display:none">
     <div class="count" id="items-count"></div>
     <div id="items-list"></div>
+  </div>
+
+  <!-- 週替わり特集 -->
+  <div id="feature-view" style="display:none">
+    <div class="feat-head">
+      <span class="feat-vol" id="feat-vol"></span>
+      <span class="feat-kicker">今週の特集</span>
+    </div>
+    <h2 class="feat-title" id="feat-title"></h2>
+    <p class="feat-lead" id="feat-lead"></p>
+    <button class="btn solid sm feat-now" id="feat-now" style="display:none" onclick="backToNow()">← 今週号に戻る</button>
+    <div id="feat-cards" class="gallery"></div>
+    <div class="feat-back-title">バックナンバー</div>
+    <div class="season-bar" id="feat-backs"></div>
   </div>
 
   <!-- ミックス（合成エンジン） -->
@@ -336,9 +359,9 @@ function persistSpec(o){ if(typeof o.n !== 'string') return; // written only whe
 const CMAP = LOOKS; // back-compat alias
 
 /* ---------- views ---------- */
-const VIEWS = ['looks','all','mix','items','board','setup','loading','results'];
-const VIEW_EL = { looks:'looks-view', all:'all-view', mix:'mix-view', items:'items-view', board:'board-view' };
-const BROWSE = ['looks','all','mix','items','board'];
+const VIEWS = ['looks','feature','all','mix','items','board','setup','loading','results'];
+const VIEW_EL = { looks:'looks-view', feature:'feature-view', all:'all-view', mix:'mix-view', items:'items-view', board:'board-view' };
+const BROWSE = ['looks','feature','all','mix','items','board'];
 function showView(v){
   VIEWS.forEach(k => {
     const el = document.getElementById(VIEW_EL[k] || k);
@@ -349,6 +372,7 @@ function showView(v){
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   document.getElementById('topcta').style.display = BROWSE.includes(v) ? '' : 'none';
   if(v === 'board') renderBoard();
+  if(v === 'feature') renderFeature();
   if(v === 'mix' && !document.querySelector('#mix-cards .look')) renderMix();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -447,7 +471,7 @@ function initLookImg(n, pfx){
   probe.src = bundledPath(n);
 }
 /* after a successful generation, refresh this look's box in every view */
-function refreshLookBoxes(n){ ['d','s','a','b','x'].forEach(p => initLookImg(n, p)); }
+function refreshLookBoxes(n){ ['d','s','a','b','x','f'].forEach(p => initLookImg(n, p)); }
 
 /* ---- single-figure safety net ----
    The image model occasionally draws the outfit twice (two variants side by side)
@@ -567,7 +591,7 @@ async function genLookIllus(n, pfx){
         lsSet(imgKey(n), src);
       } catch(e){}
       setIllusImg(box, src, true, n, pfx);
-      ['d','s','a','b','x'].forEach(p => {
+      ['d','s','a','b','x','f'].forEach(p => {
         if(p === pfx) return;
         const ob = document.getElementById('cillus-' + p + '-' + n);
         if(ob) setIllusImg(ob, src, true, n, p);
@@ -620,11 +644,13 @@ function bestFor(cat, sk, fam, center, band, rng, avoid, st){
 }
 function seasonPick(cat, sk, rng){ const p = (POOL[cat] || []).filter(it => it.m.se.includes(sk));
   const arr = p.length ? p : (POOL[cat] || []); return arr[Math.floor(rng() * arr.length)]; }
-function synth(seedStr, adv){
+function synth(seedStr, adv, opts){
+  opts = opts || {};
   const { rng, pick, chance, pickW } = mkPickers(seedStr);
-  const sk = SKEY[seasonOfNow()];
+  const sk = opts.sk || SKEY[seasonOfNow()];
   const st = statureIdx();
-  const fam = pickW(FAM_W), center = FAM_F[fam];
+  const budget = (opts.colBud != null) ? opts.colBud : ADV_COLBUD[adv];
+  const fam = opts.fam || pickW(FAM_W), center = FAM_F[fam];
   const pants = bestFor('PT', sk, fam, center, 1, rng, [], st) || seasonPick('PT', sk, rng);
   const topCats = sk === 'su' ? [['SH',3],['TS',5]]
                  : sk === 'wi' ? [['SW',5],['SH',2],['TS',1]]
@@ -670,7 +696,7 @@ function synth(seedStr, adv){
   let guard = 0;
   while(guard++ < 5){
     const stset = statementSet(comboPieces(outfit));
-    if(stset.size <= ADV_COLBUD[adv]) break;
+    if(stset.size <= budget) break;
     const ids = comboPieces(outfit);
     let dropped = false;
     for(const cat of ['AC','CP','BG']){
@@ -682,6 +708,16 @@ function synth(seedStr, adv){
       }
     }
     if(!dropped) break;
+  }
+
+  // ---- テーマの必須アイテム（特集用） ----
+  if(opts.force){ const F = opts.force;
+    if(F.i) outfit.i = Array.isArray(F.i) ? F.i.slice() : [F.i];
+    if('o' in F) outfit.o = F.o;
+    if(F.p) outfit.p = F.p;
+    if(F.f) outfit.f = F.f;
+    if(F.b) outfit.b = F.b;
+    if(F.x) outfit.x = [F.x].concat(outfit.x.filter(id => id.slice(0,2) !== F.x.slice(0,2))).slice(0,2);
   }
 
   const ids = comboPieces(outfit);
@@ -708,6 +744,68 @@ function renderMix(){
 }
 function setMixAdv(a){ mixAdv = a; renderMix(); }
 function reshuffleMix(){ mixSeed = 'r' + Date.now(); renderMix(); }
+
+/* ---------- ⑤ 週替わり特集（お題×100を④エンジンで編集） ---------- */
+function hasCol(o, c){ return comboPieces(o).some(id => (IMAP[id].m.col || []).includes(c)); }
+function stOnly(o, set){ return [...statementSet(comboPieces(o))].every(c => set.has(c)); }
+const THEMES = [
+  { title:'オールネイビーで通す', lead:'紺は日本人の勝負色。トップからボトム、小物まで濃紺で寄せ、素材の差だけで奥行きを出す一週間。',
+    adv:0, opts:{ colBud:1 }, match:o => hasCol(o,'nv') && stOnly(o, new Set(['nv'])) },
+  { title:'オリーブを着る', lead:'ミリタリーの記号、オリーブ。一点投入から全面まで、カーキの濃淡で組む。',
+    adv:1, opts:{ fam:'mil' }, match:o => hasCol(o,'ol') },
+  { title:'白シャツ一枚の説得力', lead:'足すより、引く。白オックスフォードを主役に、余計を削いだ装い。',
+    adv:0, opts:{ colBud:1, force:{ i:'SH-01' } } },
+  { title:'ローファーの休日', lead:'足元をローファーに替えるだけで、休日は少しだけ大人になる。',
+    adv:1, opts:{ force:{ f:'FT-09' } } },
+  { title:'スウェットの大人化', lead:'部屋着の記号を、どう外へ出すか。品を一点足す小技の特集。',
+    adv:1, match:o => comboPieces(o).some(id => ['SW-01','SW-02','SW-03','SW-04','SW-05','SW-06'].includes(id)) },
+  { title:'モノトーンの品格', lead:'白・黒・グレーだけ。色を捨て、シルエットとフォルムで語る。',
+    adv:0, opts:{ fam:'cl', colBud:0 }, match:o => statementSet(comboPieces(o)).size === 0 },
+  { title:'古着屋に行く日', lead:'一点、時代を混ぜる。抜けと外しのバランスを効かせた休日着。',
+    adv:2, opts:{ fam:'work' } },
+  { title:'デニムを軸に', lead:'色落ち、リジッド、ワイド。青の分量で表情を変える。',
+    adv:1, match:o => hasCol(o,'dn') },
+  { title:'紺ブレの現在地', lead:'トラッドの背骨、紺ブレザー。デニムからスラックスまで受け止める万能を再考する。',
+    adv:1, opts:{ sk:'au', fam:'trad', force:{ o:'OU-01' } } },
+  { title:'黒で武装する', lead:'全身黒。重さを軽さに変えるのは、素材と抜けの一点だけ。',
+    adv:1, opts:{ fam:'cl', colBud:0 }, match:o => comboPieces(o).some(id => IMAP[id].m.col.includes('bk')) && statementSet(comboPieces(o)).size === 0 }
+];
+const FEAT_EPOCH = Date.UTC(2026,0,5); // 基準（月曜）
+function weekIndex(){ return Math.floor((Date.now() - FEAT_EPOCH) / (7 * 86400000)); }
+function themeOf(w){ const n = THEMES.length; return THEMES[((w % n) + n) % n]; }
+let featWeek = weekIndex();
+function featurePicks(theme, w){
+  const seed = 'feat-' + w + '-' + theme.title, n = theme.n || 4;
+  const outs = [], seen = new Set();
+  for(let k = 0; outs.length < n && k < 300; k++){
+    const o = synth(seed + '-' + k, theme.adv != null ? theme.adv : 1, theme.opts || {});
+    if(seen.has(o.n) || (theme.match && !theme.match(o))) continue;
+    seen.add(o.n); registerLook(o); outs.push(o);
+  }
+  for(let k = 0; outs.length < n && k < 300; k++){ // 足りなければ制約を緩めて埋める
+    const o = synth(seed + '-fill-' + k, theme.adv != null ? theme.adv : 1, theme.opts || {});
+    if(seen.has(o.n)) continue; seen.add(o.n); registerLook(o); outs.push(o);
+  }
+  return outs;
+}
+function renderFeature(){
+  const w = featWeek, theme = themeOf(w);
+  document.getElementById('feat-vol').textContent = 'Vol.' + (w + 1);
+  document.getElementById('feat-title').textContent = theme.title;
+  document.getElementById('feat-lead').textContent = theme.lead;
+  document.getElementById('feat-now').style.display = (w === weekIndex()) ? 'none' : 'inline-flex';
+  const picks = featurePicks(theme, w);
+  document.getElementById('feat-cards').innerHTML = picks.map(o => lookCardHTML(o, null, 'f')).join('');
+  picks.forEach(o => initLookImg(o.n, 'f'));
+  const backs = [];
+  for(let i = 1; i <= 8; i++){ const bw = w - i; if(bw < 0) break; backs.push(bw); }
+  document.getElementById('feat-backs').innerHTML = backs.length
+    ? backs.map(bw => `<button class="stab ${bw===w?'on':''}" onclick="viewIssue(${bw})">Vol.${bw+1} ${esc(themeOf(bw).title)}</button>`).join('')
+    : '<span class="snote">これが最初の号です</span>';
+}
+function viewIssue(w){ featWeek = w; renderFeature(); window.scrollTo({top:0,behavior:'smooth'}); }
+function backToNow(){ featWeek = weekIndex(); renderFeature(); }
+
 
 /* ---------- 季節のコーデ ---------- */
 function seasonOfNow(){ const m = new Date().getMonth() + 1;
